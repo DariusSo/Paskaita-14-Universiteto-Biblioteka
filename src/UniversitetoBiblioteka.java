@@ -19,7 +19,7 @@ public class UniversitetoBiblioteka implements BibliotekosValdymas{
         boolean flag2 = true;
         while (flag2 == true){
             try{
-                System.out.println("1 - Prideti leidini, 2 - Rodyti leidiniu sarasa, 3 - Ieskoti(Pasalinti) leidini");
+                System.out.println("1 - Prideti leidini, 2 - Rodyti leidiniu sarasa, 3 - Ieskoti(Pasalinti) leidini, 4 - Iseiti");
                 pasirinkimas = scanner.nextInt();
                 scanner.nextLine();
                 flag2 = false;
@@ -38,6 +38,8 @@ public class UniversitetoBiblioteka implements BibliotekosValdymas{
             case 3:
                 ieškotiLeidinio(userPavadinimas());
                 break;
+            case 4:
+                System.exit(0);
             default:
                 throw new BlogasPasirinkimasException("Tokios funkcijos meniu neturi.");
         }
