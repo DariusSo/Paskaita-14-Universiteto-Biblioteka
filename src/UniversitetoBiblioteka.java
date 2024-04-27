@@ -5,10 +5,7 @@ import java.io.IOException;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class UniversitetoBiblioteka implements BibliotekosValdymas{
     Scanner scanner = new Scanner(System.in);
@@ -19,7 +16,7 @@ public class UniversitetoBiblioteka implements BibliotekosValdymas{
         boolean flag2 = true;
         while (flag2 == true){
             try{
-                System.out.println("1 - Prideti leidini, 2 - Rodyti leidiniu sarasa, 3 - Ieskoti(Pasalinti) leidini");
+                System.out.println("1 - Prideti leidini, 2 - Rodyti leidiniu sarasa, 3 - Ieskoti(Pasalinti) leidini, 4 - Leidiniu Top 5, 5 - Iseiti");
                 pasirinkimas = scanner.nextInt();
                 scanner.nextLine();
                 flag2 = false;
@@ -38,6 +35,11 @@ public class UniversitetoBiblioteka implements BibliotekosValdymas{
             case 3:
                 ieškotiLeidinio(userPavadinimas());
                 break;
+            case 4:
+                top5();
+                break;
+            case 5:
+                System.exit(0);
             default:
                 throw new BlogasPasirinkimasException("Tokios funkcijos meniu neturi.");
         }
@@ -122,11 +124,31 @@ public class UniversitetoBiblioteka implements BibliotekosValdymas{
         }
         System.out.println("Pavadinimas: ");
         String pavadinimas = scanner.nextLine();
+        System.out.println("Leidykla: ");
+        String leidykla = scanner.nextLine();
+        int reitingas = 0;
+        boolean flag = true;
+        while (flag == true){
+            try{
+                System.out.println("Reitingas:");
+                reitingas = scanner.nextInt();
+                scanner.nextLine();
+                if (reitingas < 0 || reitingas > 100){
+                    throw new VirsytiLimitaiException("Vertes yra nuo 0 iki 100.");
+                }
+            }catch (InputMismatchException e){
+                System.out.println("Blogai ivestas reitingas, bandyti dar karta.");
+            } catch (VirsytiLimitaiException e) {
+                System.out.println("Vertes yra nuo 0 iki 100. Bandykite dawr karta.");
+            }
+        }
+        System.out.println("Kategorija: ");
+        String kategorija = scanner.nextLine();
         switch (pasirinko){
             case 1:
                 System.out.println("Autorius: ");
                 String autorius = scanner.nextLine();
-                Leidinys knyga = new Knyga(pavadinimas, autorius);
+                Leidinys knyga = new Knyga(reitingas, pavadinimas, autorius, kategorija, leidykla);
                 return knyga;
             case 2:
                 boolean flag3 = true;
@@ -134,7 +156,7 @@ public class UniversitetoBiblioteka implements BibliotekosValdymas{
                     try{
                         System.out.println("Isleidimo data: ");
                         LocalDate isleidimoData1 = LocalDate.parse(scanner.nextLine(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                        Leidinys zurnalas = new Zurnalas(pavadinimas, isleidimoData1);
+                        Leidinys zurnalas = new Zurnalas(reitingas, pavadinimas, isleidimoData1, leidykla);
                         flag3 = false;
                         return zurnalas;
                     }catch (DateTimeException e){
@@ -158,11 +180,11 @@ public class UniversitetoBiblioteka implements BibliotekosValdymas{
             String line;
             while ((line = bufferedReader.readLine()) != null) {
                 String[] l = line.split(",");
-                if (l.length > 3){
-                    Leidinys knyga = new Knyga(l[0], l[1]);
+                if (l.length > 4){
+                    Leidinys knyga = new Knyga(Integer.parseInt(l[3]), l[0], l[1], l[2], l[4]);
                     leidiniuList.add(knyga);
                 }else{
-                    Leidinys zurnalas = new Zurnalas(l[0], LocalDate.parse(l[1]));
+                    Leidinys zurnalas = new Zurnalas(Integer.parseInt(l[3]), l[0], LocalDate.parse(l[1]), l[2]);
                     leidiniuList.add(zurnalas);
                 }
             }
@@ -173,8 +195,75 @@ public class UniversitetoBiblioteka implements BibliotekosValdymas{
         }
     }
     public void rodytiSarasa(){
-        for(Leidinys l : leidiniuList){
-            System.out.println(l.rodytiInformacija());
+        boolean flag = true;
+        int pasirinkimas = 0;
+        while(flag == true){
+            try{
+                System.out.println("1 - Knygos, 2 - Zurnalai, 3 - Visi leidiniai: ");
+                pasirinkimas = scanner.nextInt();
+                scanner.nextLine();
+                if (pasirinkimas > 4 || pasirinkimas < 1) {
+                    throw new BlogasPasirinkimasException("Blogas pasirinkimas");
+                }
+                switch (pasirinkimas){
+                    case 1:
+                        for(Leidinys l : leidiniuList){
+                            if(l instanceof Knyga){
+                                System.out.println(l.rodytiInformacija());
+                            }
+                        }
+                        flag = false;
+                        break;
+                    case 2:
+                        for(Leidinys l : leidiniuList){
+                            if(l instanceof Zurnalas){
+                                System.out.println(l.rodytiInformacija());
+                            }
+                        }
+                        flag = false;
+                        break;
+                    case 3:
+                        for(Leidinys l : leidiniuList){
+                            System.out.println(l.rodytiInformacija());
+                        }
+                        flag = false;
+                        break;
+                }
+            }catch (InputMismatchException e){
+                scanner.next();
+                System.out.println("Bloga ivestis. Bandykite dar karta.");
+            } catch (BlogasPasirinkimasException e) {
+                System.out.println("Bloga ivestis. Bandykite dar karta.");
+            }
         }
     }
+    public void top5(){
+        List<Leidinys> tempList = new ArrayList<>();
+        List<Leidinys> tempList1 = new ArrayList<>();
+
+        for(Leidinys l : leidiniuList){
+            if(l instanceof Knyga){
+                tempList.add(l);
+            }else{
+                tempList1.add(l);
+            }
+        }
+        System.out.println("Knygu top 5: ");
+        for(int i = 0; i < 5; i++){
+            for(Leidinys l : tempList){
+                if(l.getReitingas() == i + 1){
+                    System.out.println(l.rodytiInformacija());
+                }
+            }
+        }
+        System.out.println("Zurnalu top 5: ");
+        for(int i = 0; i < 5; i++){
+            for(Leidinys l : tempList1){
+                if(l.getReitingas() == i + 1){
+                    System.out.println(l.rodytiInformacija());
+                }
+            }
+        }
+    }
+
 }
